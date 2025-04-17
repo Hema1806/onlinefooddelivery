@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Restaurants - FoodExpress{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="fas fa-store me-2"></i>Available Restaurants</h2>
+        <p>Explore restaurants and their delicious food items</p>
+    </div>
+    <div class="col-md-4">
+        <div class="input-group">
+            <input type="text" class="form-control" placeholder="Search restaurants..." id="searchInput">
+            <button class="btn btn-outline-secondary" type="button">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row" id="restaurantsContainer">
+    {% for restaurant in restaurants %}
+    <div class="col-md-4 mb-4 restaurant-item">
+        <div class="card restaurant-card">
+            <img src="{{ url_for('static', filename='images/restaurant_' + restaurant.restaurant_id|string + '.jpg') }}" 
+            onerror="this.src='https://via.placeholder.com/350x200'"
+            alt="Restaurant Image">
+            <div class="card-body">
+                <h5 class="card-title">{{ restaurant.name }}</h5>
+                <p class="card-text">
+                    <i class="fas fa-map-marker-alt text-primary me-2"></i>{{ restaurant.location }}
+                </p>
+                <p class="card-text">
+                    <i class="fas fa-phone text-primary me-2"></i>{{ restaurant.contact }}
+                </p>
+                <div class="d-grid">
+                    <a href="{{ url_for('get_menu', restaurant_id=restaurant.restaurant_id) }}" class="btn btn-primary">
+                        <i class="fas fa-utensils me-2"></i>View Menu
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if not restaurants %}
+<div class="text-center py-5">
+    <i class="fas fa-store-slash fa-4x text-muted mb-3"></i>
+    <h4 class="text-muted">No restaurants available at the moment</h4>
+    <p>Please check back later for more options.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const restaurantItems = document.querySelectorAll('.restaurant-item');
+        
+        searchInput.addEventListener('keyup', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            restaurantItems.forEach(item => {
+                const restaurantName = item.querySelector('.card-title').textContent.toLowerCase();
+                const restaurantLocation = item.querySelector('.card-text:nth-of-type(1)').textContent.toLowerCase();
+                
+                if (restaurantName.includes(searchTerm) || restaurantLocation.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

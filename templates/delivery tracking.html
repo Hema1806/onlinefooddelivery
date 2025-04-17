@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Track Your Delivery{% endblock %}
+
+{% block content %}
+<div class="tracking-container">
+    <h2 class="text-center mb-4">Track Your Delivery</h2>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="tracking-status">
+                <div class="status-step active">
+                    <div class="status-icon">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <div class="status-label">Order Confirmed</div>
+                </div>
+                <div class="status-step active">
+                    <div class="status-icon">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <div class="status-label">Preparing</div>
+                </div>
+                <div class="status-step current">
+                    <div class="status-icon">
+                        <i class="fas fa-motorcycle"></i>
+                    </div>
+                    <div class="status-label">Out for Delivery</div>
+                </div>
+                <div class="status-step">
+                    <div class="status-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <div class="status-label">Delivered</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <h4 class="mb-3">Delivery Details</h4>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Order ID:</strong> <span id="orderId">{{ order.order_id }}</span></p>
+                    <p><strong>Restaurant:</strong> <span id="restaurantName">{{ order.restaurant_name }}</span></p>
+                    <p><strong>Estimated Delivery:</strong> <span id="estimatedTime">25-35 mins</span></p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Delivery Address:</strong></p>
+                    <p id="deliveryAddress">{{ user.address }}</p>
+                    <p><strong>Delivery Partner:</strong> <span id="deliveryPartner">Ravi K.</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mt-4">
+        <div class="card-body">
+            <h4 class="mb-3">Live Tracking</h4>
+            <div id="map" style="height: 400px; border-radius: 8px;"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBLSzmkx7UABiTfyqeoNocZfkno086Mpk4&callback=initMap" async defer></script>
+<script>
+    let map, directionsService, directionsRenderer, deliveryMarker;
+    
+    // Custom icons
+    const restaurantIcon = { url: "/static/images/restaurant-marker.png", scaledSize: new google.maps.Size(40, 40) };
+    const homeIcon = { url: "/static/images/home-marker.png", scaledSize: new google.maps.Size(40, 40) };
+    const deliveryIcon = { url: "/static/images/delivery-marker.png", scaledSize: new google.maps.Size(50, 50) };
+
+    function initMap() {
+        map = new google.maps.Map(document.getElementById("map"), {
+            center: { lat: 11.0168, lng: 76.9558 },
+            zoom: 13,
+            styles: [{ featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }]
+        });
+
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({
+            map: map,
+            suppressMarkers: true,
+            polylineOptions: { strokeColor: "#ff6b6b", strokeWeight: 5 }
+        });
+
+        fetchDeliveryRoute();
+        setTimeout(simulateDelivery, 3000);
+    }
+
+    function fetchDeliveryRoute() {
+        fetch('/get-delivery-route')
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) throw new Error(data.error);
+
+                const start = new google.maps.LatLng(data.start.lat, data.start.lng);
+                const end = new google.maps.LatLng(data.end.lat, data.end.lng);
+
+                addMarkers(start, end);
+                calculateRoute(start, end);
+            })
+            .catch(error => {
+                console.error("Error fetching route:", error);
+                simulateFallbackRoute();
+            });
+    }
+
+    function addMarkers(start, end) {
+        new google.maps.Marker({ position: start, map: map, icon: restaurantIcon, title: "Restaurant" });
+        new google.maps.Marker({ position: end, map: map, icon: homeIcon, title: "Your Location" });
+
+        deliveryMarker = new google.maps.Marker({
+            position: start,
+            map: map,
+            icon: deliveryIcon,
+            title: "Delivery Partner",
+            animation: google.maps.Animation.BOUNCE
+        });
+    }
+
+    function calculateRoute(start, end) {
+        directionsService.route({ origin: start, destination: end, travelMode: google.maps.TravelMode.DRIVING },
+            (response, status) => {
+                if (status === "OK") {
+                    directionsRenderer.setDirections(response);
+                    map.fitBounds(new google.maps.LatLngBounds().extend(start).extend(end));
+                } else {
+                    console.error("Route calculation failed:", status);
+                }
+            });
+    }
+
+    function simulateFallbackRoute() {
+        const fallbackStart = { lat: 11.0168, lng: 76.9558 };
+        const fallbackEnd = { lat: 11.0376, lng: 76.9674 };
+
+        const start = new google.maps.LatLng(fallbackStart.lat, fallbackStart.lng);
+        const end = new google.maps.LatLng(fallbackEnd.lat, fallbackEnd.lng);
+
+        addMarkers(start, end);
+        calculateRoute(start, end);
+    }
+
+    function simulateDelivery() {
+        if (!deliveryMarker || !directionsRenderer.getDirections()) return;
+
+        const path = directionsRenderer.getDirections().routes[0].overview_path;
+        let currentIndex = 0;
+
+        const interval = setInterval(() => {
+            if (currentIndex >= path.length) {
+                clearInterval(interval);
+                document.querySelector('.status-step.current').classList.remove('current');
+                document.querySelectorAll('.status-step')[3].classList.add('active', 'current');
+                return;
+            }
+
+            deliveryMarker.setPosition(path[currentIndex++]);
+            document.getElementById('estimatedTime').textContent = `${Math.max(5, Math.round((path.length - currentIndex) * 0.3))} mins`;
+
+        }, 1000);
+    }
+
+    window.gm_authFailure = function() {
+        document.getElementById('map').innerHTML = '<div class="alert alert-warning">Map could not be loaded. Please check your API key.</div>';
+    };
+</script>
+{% endblock %}

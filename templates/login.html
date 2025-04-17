@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Login - FoodExpress{% endblock %}
+
+{% block content %}
+<div class="auth-form">
+    <div class="auth-logo">
+        <i class="fas fa-utensils"></i>
+    </div>
+    <h2>Login to FoodExpress</h2>
+    <form method="POST" action="{{ url_for('login') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email address</label>
+            <input type="email" class="form-control" id="email" name="email" required>
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+        </div>
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary">Login</button>
+        </div>
+        <div class="text-center mt-3">
+            <p>Don't have an account? <a href="{{ url_for('register') }}">Register</a></p>
+        </div>
+    </form>
+</div>
+{% endblock %}

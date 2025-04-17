@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            background: #28a745;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #218838;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Search for Food</h2>
+        <input type="text" id="foodInput" placeholder="Enter food name...">
+        <button onclick="searchFood()">Search</button>
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        function searchFood() {
+            const foodName = document.getElementById("foodInput").value.trim();
+            const resultDiv = document.getElementById("result");
+            
+            if (foodName === "") {
+                resultDiv.innerHTML = "❌ Please enter a food item!";
+                return;
+            }
+            
+            // Mock food database
+            const foodDatabase = {
+                "Pizza": "Delicious cheesy pizza with toppings of your choice!",
+                "Burger": "Juicy beef or veggie burger served with fries!",
+                "Pasta": "Creamy Italian pasta made with fresh ingredients!"
+            };
+            
+            const result = foodDatabase[foodName] || "❌ Food item not found!";
+            resultDiv.innerHTML = result;
+        }
+    </script>
+</body>
+</html>

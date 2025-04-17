@@ -1,0 +1,514 @@
+{% extends "base.html" %}
+
+{% block title %}Your Cart - FoodExpress{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4><i class="fas fa-shopping-cart me-2"></i>Your Cart</h4>
+                </div>
+                <div class="card-body">
+                    <div id="cartItems">
+                        <p class="text-center text-muted" id="emptyCartMessage">Your cart is empty</p>
+                        <div id="cartItemsList"></div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Total: ₹<span id="cartTotal">0.00</span></h5>
+                        <button class="btn btn-primary" type="button" id="checkoutBtn" disabled>
+                            <i class="fas fa-credit-card me-2"></i>Proceed to Checkout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Checkout Modal -->
+<div class="modal fade" id="checkoutModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-credit-card me-2"></i>Checkout</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6>Delivery Address</h6>
+                        <div class="card p-3 mb-3">
+                            <div id="userAddress">
+                                <p class="mb-0">Loading address...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Order Summary</h6>
+                        <div class="card p-3">
+                            <div id="orderSummary">
+                                <div id="summaryItemsList"></div>
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <span>Subtotal:</span>
+                                    <span>₹<span id="subtotal">0.00</span></span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Delivery Fee:</span>
+                                    <span>₹<span id="deliveryFee">40.00</span></span>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between fw-bold">
+                                    <span>Total:</span>
+                                    <span>₹<span id="total">0.00</span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h6>Payment Method</h6>
+                <div class="card p-3 mb-4">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="cashOnDelivery"
+                            value="Cash on Delivery" checked>
+                        <label class="form-check-label" for="cashOnDelivery">
+                            <i class="fas fa-money-bill-wave text-success me-2"></i>Cash on Delivery
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="creditCard"
+                            value="Credit Card">
+                        <label class="form-check-label" for="creditCard">
+                            <i class="far fa-credit-card text-primary me-2"></i>Credit Card
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="upi" value="UPI">
+                        <label class="form-check-label" for="upi">
+                            <i class="fas fa-mobile-alt text-warning me-2"></i>UPI
+                        </label>
+                    </div>
+
+                    <!-- Credit Card Form (shown only when Credit Card is selected) -->
+                    <div id="creditCardForm" class="mt-3 d-none">
+                        <div class="mb-3">
+                            <label for="cardNumber" class="form-label">Card Number</label>
+                            <input type="text" class="form-control" id="cardNumber" placeholder="1234 5678 9012 3456">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="expiryDate" class="form-label">Expiry Date</label>
+                                <input type="text" class="form-control" id="expiryDate" placeholder="MM/YY">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="cvv" class="form-label">CVV</label>
+                                <input type="text" class="form-control" id="cvv" placeholder="123">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cardName" class="form-label">Name on Card</label>
+                            <input type="text" class="form-control" id="cardName" placeholder="John Doe">
+                        </div>
+                    </div>
+
+                    <!-- UPI Form (shown only when UPI is selected) -->
+                    <div id="upiForm" class="mt-3 d-none">
+                        <div class="mb-3">
+                            <label for="upiId" class="form-label">UPI ID</label>
+                            <input type="text" class="form-control" id="upiId" placeholder="name@upi">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="placeOrderBtn">
+                    <i class="fas fa-check-circle me-2"></i>Place Order
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Order Success Modal -->
+<div class="modal fade" id="orderSuccessModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-5">
+                <div class="mb-4">
+                    <i class="fas fa-check-circle text-success" style="font-size: 5rem;"></i>
+                </div>
+                <h4 class="mb-4">Order Placed Successfully!</h4>
+                <p>Your order has been placed successfully. You can track your order status from the Orders page.</p>
+                <div class="mt-4">
+                    <a href="{{ url_for('order_status') }}" class="btn btn-primary me-2">
+                        <i class="fas fa-clipboard-list me-2"></i>Track Order
+                    </a>
+                    <a href="{{ url_for('restaurants') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-utensils me-2"></i>Order More
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="userAddress"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Global cart variable to ensure it's available everywhere
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+
+    document.getElementById('checkoutBtn').addEventListener('click', function (e) {
+        // Prevent form submission/page reload
+        e.preventDefault();
+
+        console.log('Proceeding to checkout...');
+
+        if (cart.length === 0) {
+            alert('Your cart is empty!');
+            return;
+        }
+
+        //     // Fetch user address
+        fetch('/api/user/address')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch address');
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('userAddress').innerHTML = `
+                    <p class="mb-1"><strong>${data.name}</strong></p>
+                    <p class="mb-1">${data.address}</p>
+                    <p class="mb-0">${data.phone}</p>
+                `;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('userAddress').innerHTML = `
+                    <p class="mb-0">Failed to load address. Please refresh or contact support.</p>
+                `;
+            });
+
+            // Populate order summary
+        populateOrderSummary();
+
+        // Show checkout modal
+        const checkoutModal = new bootstrap.Modal(document.getElementById('checkoutModal'));
+        checkoutModal.show();
+    });
+
+
+    document.addEventListener('DOMContentLoaded', function (e) {
+        e.preventDefault()
+        let restaurantId = null;
+
+        // Display cart items
+        displayCart();
+        updateCartCount();
+
+        // Toggle payment method forms
+        document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+            radio.addEventListener('change', function () {
+                document.getElementById('creditCardForm').classList.add('d-none');
+                document.getElementById('upiForm').classList.add('d-none');
+
+                if (this.value === 'Credit Card') {
+                    document.getElementById('creditCardForm').classList.remove('d-none');
+                } else if (this.value === 'UPI') {
+                    document.getElementById('upiForm').classList.remove('d-none');
+                }
+            });
+        });
+
+
+
+        // Place order button click
+        document.getElementById('placeOrderBtn').addEventListener('click', function () {
+            const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+            const orderTotal = parseFloat(document.getElementById('total').textContent);
+
+            // For demonstration, we're validating only if credit card is selected
+            if (selectedPaymentMethod === 'Credit Card') {
+                const cardNumber = document.getElementById('cardNumber').value;
+                const expiryDate = document.getElementById('expiryDate').value;
+                const cvv = document.getElementById('cvv').value;
+                const cardName = document.getElementById('cardName').value;
+
+                if (!cardNumber || !expiryDate || !cvv || !cardName) {
+                    alert('Please fill in all credit card details');
+                    return;
+                }
+            } else if (selectedPaymentMethod === 'UPI') {
+                const upiId = document.getElementById('upiId').value;
+                if (!upiId) {
+                    alert('Please enter UPI ID');
+                    return;
+                }
+            }
+
+            // Create order
+            fetch('/order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'  // CSRF protection
+                },
+                body: JSON.stringify({
+                    restaurant_id: restaurantId,
+                    amount: orderTotal,
+                    cart_items: cart
+                })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to place order');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Process payment
+                    return fetch('/payment', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token() }}'  // CSRF protection
+                        },
+                        body: JSON.stringify({
+                            order_id: data.order_id,
+                            payment_method: selectedPaymentMethod,
+                            amount: orderTotal
+                        })
+                    });
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Payment failed');
+                    }
+                    return response.json();
+                })
+                .then(paymentData => {
+                    // Close checkout modal
+                    const checkoutModal = bootstrap.Modal.getInstance(document.getElementById('checkoutModal'));
+                    checkoutModal.hide();
+
+                    // Clear cart
+                    cart = [];
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                    displayCart();
+                    updateCartCount();
+
+                    // Show success modal
+                    const successModal = new bootstrap.Modal(document.getElementById('orderSuccessModal'));
+                    successModal.show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to place order. Please try again.');
+                });
+        });
+    });
+
+    // Global addToCart function (outside DOMContentLoaded)
+    window.addToCart = function (itemName, itemPrice, itemRestaurantId) {
+        cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+        const itemRestIdStr = String(itemRestaurantId);
+
+        // Clear cart if from a different restaurant
+        if (cart.length > 0 && String(cart[0].restaurantId) !== itemRestIdStr) {
+            if (!confirm('Your cart contains items from another restaurant. Clear cart and add this item?')) {
+                return;
+            }
+            cart = [];
+        }
+
+        // 🔧 FIXED: Normalize names before comparison
+        let existingItem = cart.find(item =>
+            item.name.toLowerCase().trim() === itemName.toLowerCase().trim() &&
+            String(item.restaurantId) === itemRestIdStr
+        );
+
+        if (existingItem) {
+            existingItem.quantity += 1;
+        } else {
+            cart.push({
+                name: itemName,
+                price: itemPrice,
+                quantity: 1,
+                restaurantId: itemRestaurantId
+            });
+        }
+
+        localStorage.setItem('cart', JSON.stringify(cart));
+
+        if (document.getElementById('cartItemsList')) {
+            displayCart();
+            updateCartCount();
+        }
+    };
+
+    // Function to display cart items - moved outside DOMContentLoaded
+    function displayCart() {
+        const cartItemsList = document.getElementById('cartItemsList');
+        if (!cartItemsList) return; // Not on cart page
+
+        const emptyCartMessage = document.getElementById('emptyCartMessage');
+        const cartTotal = document.getElementById('cartTotal');
+        const checkoutBtn = document.getElementById('checkoutBtn');
+
+        // Clear previous items
+        cartItemsList.innerHTML = '';
+
+        if (cart.length === 0) {
+            emptyCartMessage.style.display = 'block';
+            cartTotal.textContent = '0.00';
+            checkoutBtn.disabled = true;
+            return;
+        }
+
+        emptyCartMessage.style.display = 'none';
+        checkoutBtn.disabled = false;
+
+        // Determine restaurant ID (from first item for simplicity)
+        restaurantId = cart[0].restaurantId;
+
+        // Display cart items
+        let totalPrice = 0;
+        cart.forEach((item, index) => {
+            const itemTotal = item.price * item.quantity;
+            totalPrice += itemTotal;
+
+            const cartItem = document.createElement('div');
+            cartItem.className = 'menu-item d-flex justify-content-between align-items-center border-bottom pb-2 mb-3';
+            cartItem.innerHTML = `
+                <div class="menu-item-details">
+                    <h5>${item.name}</h5>
+                    <p class="price mb-0">₹${item.price.toFixed(2)} x ${item.quantity}</p>
+                </div>
+                <div class="quantity-control d-flex align-items-center">
+                    <button class="btn btn-sm btn-outline-secondary decrease-btn" data-index="${index}">-</button>
+                    <span class="quantity-display mx-2">${item.quantity}</span>
+                    <button class="btn btn-sm btn-outline-secondary increase-btn" data-index="${index}">+</button>
+                    <button class="btn btn-sm btn-danger ms-2 remove-btn" data-index="${index}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            cartItemsList.appendChild(cartItem);
+        });
+
+        cartTotal.textContent = totalPrice.toFixed(2);
+
+        // Add event listeners for quantity controls
+        document.querySelectorAll('.increase-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const index = parseInt(this.dataset.index);
+                cart[index].quantity += 1;
+                localStorage.setItem('cart', JSON.stringify(cart));
+                displayCart();
+                updateCartCount();
+            });
+        });
+
+        document.querySelectorAll('.decrease-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const index = parseInt(this.dataset.index);
+                if (cart[index].quantity > 1) {
+                    cart[index].quantity -= 1;
+                } else {
+                    cart.splice(index, 1);
+                }
+                localStorage.setItem('cart', JSON.stringify(cart));
+                displayCart();
+                updateCartCount();
+            });
+        });
+
+        document.querySelectorAll('.remove-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const index = parseInt(this.dataset.index);
+                cart.splice(index, 1);
+                localStorage.setItem('cart', JSON.stringify(cart));
+                displayCart();
+                updateCartCount();
+            });
+        });
+    }
+
+    // Function to update cart count in nav - moved outside DOMContentLoaded
+    function updateCartCount() {
+        const cartCount = document.getElementById('cartCount');
+        if (cartCount) {
+            if (!cart.length) {
+                cartCount.textContent = '0';
+                cartCount.style.display = 'none';
+            } else {
+                const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+                cartCount.textContent = totalItems;
+                cartCount.style.display = 'flex';
+            }
+        }
+    }
+
+    // Function to populate order summary in checkout modal
+    function populateOrderSummary() {
+        const summaryItemsList = document.getElementById('summaryItemsList');
+        if (!summaryItemsList) return;
+
+        summaryItemsList.innerHTML = '';
+
+        let subtotal = 0;
+
+        cart.forEach(item => {
+            const itemTotal = item.price * item.quantity;
+            subtotal += itemTotal;
+
+            const summaryItem = document.createElement('div');
+            summaryItem.className = 'd-flex justify-content-between mb-2';
+            summaryItem.innerHTML = `
+                <span>${item.name} x ${item.quantity}</span>
+                <span>₹${itemTotal.toFixed(2)}</span>
+            `;
+            summaryItemsList.appendChild(summaryItem);
+        });
+
+        const deliveryFee = 40.00;
+        const total = subtotal + deliveryFee;
+
+        document.getElementById('subtotal').textContent = subtotal.toFixed(2);
+        document.getElementById('deliveryFee').textContent = deliveryFee.toFixed(2);
+        document.getElementById('total').textContent = total.toFixed(2);
+    }
+    fetch('/api/user/address')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('userAddress').innerHTML = `
+                    <p class="text-danger">Failed to load address. Please refresh or contact support.</p>
+                `;
+            } else {
+                document.getElementById('userAddress').innerHTML = `
+                    <p class="mb-1"><strong>${data.name}</strong></p>
+                    <p class="mb-1">${data.address}</p>
+                    <p class="mb-0">${data.phone}</p>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('userAddress').innerHTML = `
+                <p class="text-danger">Failed to load address. Please refresh or contact support.</p>
+            `;
+        });
+</script>
+{% endblock %}

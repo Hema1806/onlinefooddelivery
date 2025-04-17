@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Food Delivery{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #ff6b6b;
+            --secondary-color: #4ecdc4;
+            --dark-color: #293241;
+            --light-color: #f7f7f7;
+            --danger-color: #ff4a4a;
+            --success-color: #4bb543;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .navbar {
+            background-color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: white !important;
+            font-size: 1.5rem;
+        }
+        
+        .nav-link {
+            color: white !important;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .nav-link:hover {
+            transform: translateY(-2px);
+            color: var(--light-color) !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #ff5252;
+            border-color: #ff5252;
+        }
+        
+        .card {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            margin-bottom: 20px;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-img-top {
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .footer {
+            background-color: var(--dark-color);
+            color: white;
+            padding: 20px 0;
+            margin-top: auto;
+        }
+        
+        .alert {
+            border-radius: 8px;
+        }
+        
+        /* Custom classes */
+        .restaurant-card {
+            height: 100%;
+        }
+        
+        .menu-item {
+            display: flex;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .menu-item-details {
+            flex-grow: 1;
+        }
+        
+        .price {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        
+        .quantity-control {
+            display: flex;
+            align-items: center;
+        }
+        
+        .quantity-btn {
+            background-color: var(--light-color);
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .quantity-display {
+            margin: 0 10px;
+            font-weight: bold;
+        }
+        
+        /* Cart badge */
+        .cart-badge {
+            position: relative;
+        }
+        
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: var(--danger-color);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        
+        /* Delivery tracking */
+        .tracking-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .tracking-status {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+        }
+        
+        .status-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            flex: 1;
+        }
+        
+        .status-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 30px;
+            right: -50%;
+            width: 100%;
+            height: 2px;
+            background-color: #ddd;
+            z-index: 1;
+        }
+        
+        .status-step.active:not(:last-child)::after {
+            background-color: var(--success-color);
+        }
+        
+        .status-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            z-index: 2;
+            color: white;
+            font-size: 1.5rem;
+        }
+        
+        .status-step.active .status-icon {
+            background-color: var(--success-color);
+        }
+        
+        .status-step.current .status-icon {
+            background-color: var(--primary-color);
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .status-label {
+            font-weight: 500;
+            text-align: center;
+        }
+        
+        /* Login/Register Forms */
+        .auth-form {
+            max-width: 450px;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .auth-form h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--dark-color);
+        }
+        
+        .auth-form .form-control {
+            border-radius: 30px;
+            padding: 12px 20px;
+        }
+        
+        .auth-form .btn {
+            border-radius: 30px;
+            padding: 10px 20px;
+            font-weight: 600;
+        }
+        
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .auth-logo i {
+            font-size: 3rem;
+            color: var(--primary-color);
+        }
+    </style>
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('home') }}">
+                <i class="fas fa-utensils me-2"></i>FoodExpress
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if 'user_id' in session %}
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('restaurants') }}">
+            <i class="fas fa-store me-1"></i> Restaurants
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('order_status') }}">
+            <i class="fas fa-clipboard-list me-1"></i> Orders
+        </a>
+    </li>
+    <li class="nav-item cart-badge">
+        <a class="nav-link" href="#" id="cartBtn">
+            <i class="fas fa-shopping-cart me-1"></i> Cart
+            <span class="cart-count" id="cartCount">0</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('logout') }}">
+            <i class="fas fa-sign-out-alt me-1"></i> Logout
+        </a>
+    </li>
+{% elif 'admin_id' in session %}
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+            <i class="fas fa-tools me-1"></i> Admin Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('admin_logout') }}">
+            <i class="fas fa-sign-out-alt me-1"></i> Logout
+        </a>
+    </li>
+{% else %}
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('login') }}">
+            <i class="fas fa-sign-in-alt me-1"></i> Login
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('register') }}">
+            <i class="fas fa-user-plus me-1"></i> Register
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('admin_login') }}">
+            <i class="fas fa-user-shield me-1"></i> Admin
+        </a>
+    </li>
+{% endif %}
+</nav>
+
+    <!-- Flash Messages -->
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mb-4">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5><i class="fas fa-utensils me-2"></i>FoodExpress</h5>
+                    <p>Bringing delicious food right to your doorstep.</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white">About Us</a></li>
+                        <li><a href="#" class="text-white">Contact Us</a></li>
+                        <li><a href="#" class="text-white">Terms & Conditions</a></li>
+                        <li><a href="#" class="text-white">Privacy Policy</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5>Contact Us</h5>
+                    <address>
+                        <i class="fas fa-map-marker-alt me-2"></i>123 Food Street, Coimbatore<br>
+                        <i class="fas fa-phone me-2"></i>(+91) 9876543210<br>
+                        <i class="fas fa-envelope me-2"></i>info@foodexpress.com
+                    </address>
+                </div>
+            </div>
+            <hr class="mt-4 mb-4" style="background-color: rgba(255,255,255,0.2);">
+            <div class="text-center">
+                <p>&copy; 2025 FoodExpress. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Cart Modal -->
+    <div class="modal fade" id="cartModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Your Cart</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="cartItems">
+                    <p class="text-center text-muted" id="emptyCartMessage">Your cart is empty</p>
+                    <div id="cartItemsList"></div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <div>
+                        <h5>Total: ₹<span id="cartTotal">0.00</span></h5>
+                    </div>
+                    <div>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Continue Shopping</button>
+                        <button type="button" class="btn btn-primary" id="checkoutBtn">Proceed to Checkout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="menu-item">
+        <h4 class="item-name">Burger</h4>
+        <p class="item-price">5.99</p>
+        <button class="add-to-cart-btn">Add to Cart</button>
+      </div>
+      
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Cart Management Script -->
+
+    <script>
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Admin Panel Management
+    const adminPanel = {
+        // Initialize admin functionality
+        init: function() {
+            this.bindEvents();
+            this.loadDashboardStats();
+        },
+
+        // Bind all event listeners
+        bindEvents: function() {
+            // Toggle sidebar navigation
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    document.querySelector('.admin-sidebar').classList.toggle('collapsed');
+                    document.querySelector('.admin-content').classList.toggle('expanded');
+                });
+            }
+
+            // Handle restaurant approval buttons
+            document.querySelectorAll('.approve-restaurant-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const restaurantId = this.dataset.id;
+                    adminPanel.approveRestaurant(restaurantId);
+                });
+            });
+
+            // Handle restaurant rejection buttons
+            document.querySelectorAll('.reject-restaurant-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const restaurantId = this.dataset.id;
+                    adminPanel.rejectRestaurant(restaurantId);
+                });
+            });
+
+            // Handle user management
+            document.querySelectorAll('.toggle-user-status').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const userId = this.dataset.id;
+                    const currentStatus = this.dataset.status;
+                    adminPanel.toggleUserStatus(userId, currentStatus);
+                });
+            });
+
+            // Handle order status updates
+            document.querySelectorAll('.update-order-status').forEach(select => {
+                select.addEventListener('change', function() {
+                    const orderId = this.dataset.id;
+                    const newStatus = this.value;
+                    adminPanel.updateOrderStatus(orderId, newStatus);
+                });
+            });
+        },
+
+        // Load dashboard statistics
+        loadDashboardStats: function() {
+            const statsContainer = document.getElementById('dashboardStats');
+            if (!statsContainer) return;
+
+            // Show loading state
+            statsContainer.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+
+            // Fetch dashboard statistics
+            fetch('/admin/api/dashboard-stats', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                statsContainer.innerHTML = '';
+                
+                // Create stats cards
+                this.renderStatsCards(statsContainer, data);
+                
+                // Initialize charts if Chart.js is available
+                if (window.Chart) {
+                    this.initializeCharts(data);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading dashboard stats:', error);
+                statsContainer.innerHTML = '<div class="alert alert-danger">Failed to load dashboard statistics</div>';
+            });
+        },
+
+        // Render statistics cards
+        renderStatsCards: function(container, data) {
+            const metrics = [
+                { key: 'totalOrders', icon: 'fa-shopping-cart', label: 'Total Orders', color: 'primary' },
+                { key: 'totalRevenue', icon: 'fa-money-bill-wave', label: 'Total Revenue', color: 'success', prefix: '₹' },
+                { key: 'totalUsers', icon: 'fa-users', label: 'Total Users', color: 'info' },
+                { key: 'totalRestaurants', icon: 'fa-store', label: 'Total Restaurants', color: 'warning' }
+            ];
+
+            const row = document.createElement('div');
+            row.className = 'row';
+
+            metrics.forEach(metric => {
+                const value = metric.key === 'totalRevenue' ? data[metric.key].toFixed(2) : data[metric.key];
+                const card = document.createElement('div');
+                card.className = 'col-md-3 col-sm-6 mb-4';
+                card.innerHTML = `
+                    <div class="card border-left-${metric.color} shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-${metric.color} text-uppercase mb-1">
+                                        ${metric.label}
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        ${metric.prefix || ''}${value}
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas ${metric.icon} fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                row.appendChild(card);
+            });
+
+            container.appendChild(row);
+        },
+
+        // Initialize charts
+        initializeCharts: function(data) {
+            // Revenue chart
+            const revenueCtx = document.getElementById('revenueChart');
+            if (revenueCtx) {
+                new Chart(revenueCtx, {
+                    type: 'line',
+                    data: {
+                        labels: data.revenueData.map(item => item.date),
+                        datasets: [{
+                            label: 'Revenue',
+                            data: data.revenueData.map(item => item.amount),
+                            borderColor: '#4e73df',
+                            backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '₹' + value;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Order status pie chart
+            const orderStatusCtx = document.getElementById('orderStatusChart');
+            if (orderStatusCtx) {
+                new Chart(orderStatusCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(data.orderStatusCount),
+                        datasets: [{
+                            data: Object.values(data.orderStatusCount),
+                            backgroundColor: [
+                                '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'
+                            ]
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+        },
+
+        // Approve restaurant
+        approveRestaurant: function(restaurantId) {
+            this.updateRestaurantStatus(restaurantId, 'approved');
+        },
+
+        // Reject restaurant
+        rejectRestaurant: function(restaurantId) {
+            this.updateRestaurantStatus(restaurantId, 'rejected');
+        },
+
+        // Update restaurant status
+updateRestaurantStatus: function(restaurantId, status) {
+    fetch('/admin/api/restaurants/' + restaurantId + '/status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+        },
+        body: JSON.stringify({ status: status })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update UI to reflect the change
+            const restaurantRow = document.querySelector(`.restaurant-row[data-id="${restaurantId}"]`);
+            if (restaurantRow) {
+                if (status === 'approved') {
+                    restaurantRow.querySelector('.status-badge').innerHTML = 
+                        '<span class="badge bg-success">Approved</span>';
+                    restaurantRow.querySelector('.approve-restaurant-btn').disabled = true;
+                    restaurantRow.querySelector('.reject-restaurant-btn').disabled = false;
+                } else {
+                    restaurantRow.querySelector('.status-badge').innerHTML = 
+                        '<span class="badge bg-danger">Rejected</span>';
+                    restaurantRow.querySelector('.approve-restaurant-btn').disabled = false;
+                    restaurantRow.querySelector('.reject-restaurant-btn').disabled = true;
+                }
+            }
+
+            // Show success message
+            this.showNotification('success', `Restaurant ${status === 'approved' ? 'approved' : 'rejected'} successfully`);
+        } else {
+            this.showNotification('error', data.message || 'Failed to update restaurant status');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating restaurant status:', error);
+        this.showNotification('error', 'An error occurred while updating restaurant status');
+    });
+},
+
+// Toggle user status (active/inactive)
+toggleUserStatus: function(userId, currentStatus) {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    
+    fetch('/admin/api/users/' + userId + '/status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+        },
+        body: JSON.stringify({ status: newStatus })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update UI to reflect the change
+            const btn = document.querySelector(`.toggle-user-status[data-id="${userId}"]`);
+            if (btn) {
+                btn.dataset.status = newStatus;
+                if (newStatus === 'active') {
+                    btn.innerHTML = '<i class="fas fa-ban"></i> Deactivate';
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-danger');
+                } else {
+                    btn.innerHTML = '<i class="fas fa-check"></i> Activate';
+                    btn.classList.remove('btn-danger');
+                    btn.classList.add('btn-success');
+                }
+            }
+
+            // Update status badge
+            const userRow = document.querySelector(`.user-row[data-id="${userId}"]`);
+            if (userRow) {
+                userRow.querySelector('.status-badge').innerHTML = 
+                    `<span class="badge bg-${newStatus === 'active' ? 'success' : 'danger'}">${newStatus}</span>`;
+            }
+
+            this.showNotification('success', `User status updated to ${newStatus}`);
+        } else {
+            this.showNotification('error', data.message || 'Failed to update user status');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating user status:', error);
+        this.showNotification('error', 'An error occurred while updating user status');
+    });
+},
+
+// Update order status
+updateOrderStatus: function(orderId, status) {
+    fetch('/admin/api/orders/' + orderId + '/status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+        },
+        body: JSON.stringify({ status: status })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update status badge
+            const orderRow = document.querySelector(`.order-row[data-id="${orderId}"]`);
+            if (orderRow) {
+                // Map status to badge color
+                const statusColors = {
+                    'pending': 'warning',
+                    'preparing': 'info',
+                    'out_for_delivery': 'primary',
+                    'delivered': 'success',
+                    'cancelled': 'danger'
+                };
+                const color = statusColors[status] || 'secondary';
+                const displayStatus = status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                
+                orderRow.querySelector('.status-badge').innerHTML = 
+                    `<span class="badge bg-${color}">${displayStatus}</span>`;
+            }
+
+            this.showNotification('success', `Order status updated to ${status.replace('_', ' ')}`);
+        } else {
+            this.showNotification('error', data.message || 'Failed to update order status');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating order status:', error);
+        this.showNotification('error', 'An error occurred while updating order status');
+    });
+},
+
+// Show notification
+showNotification: function(type, message) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+    
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert ${alertClass} alert-dismissible fade show`;
+    alertDiv.role = 'alert';
+    alertDiv.innerHTML = `
+        <i class="fas ${icon} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    // Find the notification container or create one
+    let notificationContainer = document.getElementById('adminNotifications');
+    if (!notificationContainer) {
+        notificationContainer = document.createElement('div');
+        notificationContainer.id = 'adminNotifications';
+        notificationContainer.className = 'position-fixed bottom-0 end-0 p-3';
+        notificationContainer.style.zIndex = '1050';
+        document.body.appendChild(notificationContainer);
+    }
+    
+    notificationContainer.appendChild(alertDiv);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        alertDiv.classList.remove('show');
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.parentNode.removeChild(alertDiv);
+            }
+        }, 150);
+    }, 5000);
+}
+    };
+
+    // Initialize admin panel if on admin page
+    if (document.querySelector('.admin-dashboard')) {
+        adminPanel.init();
+    }
+    
+    // Data table initialization
+    const adminTables = document.querySelectorAll('.admin-table');
+    if (adminTables.length > 0 && window.$.fn.DataTable) {
+        adminTables.forEach(table => {
+            $(table).DataTable({
+                responsive: true,
+                order: [[0, 'desc']]
+            });
+        });
+    }
+    
+    // Date range picker initialization
+    const dateRangePicker = document.getElementById('reportDateRange');
+    if (dateRangePicker && window.daterangepicker) {
+        $(dateRangePicker).daterangepicker({
+            ranges: {
+                'Today': [moment(), moment()],
+                'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                'This Month': [moment().startOf('month'), moment().endOf('month')],
+                'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+            },
+            startDate: moment().subtract(29, 'days'),
+            endDate: moment()
+        }, function(start, end) {
+            $('#reportDateRange span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
+            // Trigger report generation
+            adminPanel.generateReport(start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD'));
+        });
+    }
+    
+    // File export functionality
+    document.querySelectorAll('.export-data').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const format = this.dataset.format;
+            const reportType = this.dataset.report;
+            const dateRange = document.getElementById('reportDateRange');
+            
+            let startDate, endDate;
+            if (dateRange) {
+                const dates = dateRange.querySelector('span').textContent.split(' - ');
+                startDate = moment(dates[0], 'MMMM D, YYYY').format('YYYY-MM-DD');
+                endDate = moment(dates[1], 'MMMM D, YYYY').format('YYYY-MM-DD');
+            } else {
+                startDate = moment().subtract(30, 'days').format('YYYY-MM-DD');
+                endDate = moment().format('YYYY-MM-DD');
+            }
+            
+            window.location.href = `/admin/export/${reportType}?format=${format}&start_date=${startDate}&end_date=${endDate}`;
+        });
+    });
+});
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize cart from local storage
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            updateCartCount();
+        
+            // Cart button click event
+            document.getElementById('cartBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                displayCart();
+                const cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
+                cartModal.show();
+            });
+            
+            // Checkout button click event
+            document.getElementById('checkoutBtn').addEventListener('click', function() {
+                if (cart.length === 0) {
+                    alert('Your cart is empty!');
+                    return;
+                }
+                
+                // Close the cart modal
+                const cartModal = bootstrap.Modal.getInstance(document.getElementById('cartModal'));
+                if (cartModal) {
+                    cartModal.hide();
+                }
+                
+                // Redirect to the cart page for full checkout process
+                window.location.href = "/cart";
+            });
+            
+            // Function to update cart count badge
+            function updateCartCount() {
+                const cartCount = document.getElementById('cartCount');
+                if (!cart.length) {
+                    cartCount.textContent = '0';
+                    cartCount.style.display = 'none';
+                } else {
+                    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+                    cartCount.textContent = totalItems;
+                    cartCount.style.display = 'flex';
+                }
+            }
+        
+            // Function to display cart items in modal
+            function displayCart() {
+                const cartItemsList = document.getElementById('cartItemsList');
+                const emptyCartMessage = document.getElementById('emptyCartMessage');
+                const cartTotal = document.getElementById('cartTotal');
+                
+                // Clear previous items
+                cartItemsList.innerHTML = '';
+                
+                if (cart.length === 0) {
+                    emptyCartMessage.style.display = 'block';
+                    cartTotal.textContent = '0.00';
+                    return;
+                }
+                
+                emptyCartMessage.style.display = 'none';
+                
+                // Display cart items
+                let totalPrice = 0;
+                cart.forEach((item, index) => {
+                    const itemTotal = item.price * item.quantity;
+                    totalPrice += itemTotal;
+                    
+                    const cartItem = document.createElement('div');
+                    cartItem.className = 'menu-item';
+                    cartItem.innerHTML = `
+                        <div class="menu-item-details">
+                            <h5>${item.name}</h5>
+                            <p class="price">₹${item.price.toFixed(2)} x ${item.quantity}</p>
+                        </div>
+                        <div class="quantity-control">
+                            <button class="quantity-btn decrease-btn" data-index="${index}">-</button>
+                            <span class="quantity-display">${item.quantity}</span>
+                            <button class="quantity-btn increase-btn" data-index="${index}">+</button>
+                            <button class="btn btn-sm btn-danger ms-2 remove-btn" data-index="${index}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    cartItemsList.appendChild(cartItem);
+                });
+                
+                cartTotal.textContent = totalPrice.toFixed(2);
+                
+                // Add event listeners for quantity controls
+                document.querySelectorAll('.increase-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = parseInt(this.dataset.index);
+                        cart[index].quantity += 1;
+                        localStorage.setItem('cart', JSON.stringify(cart));
+                        displayCart();
+                        updateCartCount();
+                    });
+                });
+                
+                document.querySelectorAll('.decrease-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = parseInt(this.dataset.index);
+                        if (cart[index].quantity > 1) {
+                            cart[index].quantity -= 1;
+                        } else {
+                            cart.splice(index, 1);
+                        }
+                        localStorage.setItem('cart', JSON.stringify(cart));
+                        displayCart();
+                        updateCartCount();
+                    });
+                });
+                
+                document.querySelectorAll('.remove-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = parseInt(this.dataset.index);
+                        cart.splice(index, 1);
+                        localStorage.setItem('cart', JSON.stringify(cart));
+                        displayCart();
+                        updateCartCount();
+                    });
+                });
+            }
+        
+            // Add to cart function (will be called from other pages)
+            window.addToCart = function(itemId, name, price, restaurantId) {
+                // Convert price to a number if it's a string
+                price = typeof price === 'string' ? parseFloat(price) : price;
+                
+                // Check if adding items from different restaurants
+                if (cart.length > 0 && cart[0].restaurantId && cart[0].restaurantId !== restaurantId) {
+                    if (confirm('Your cart contains items from a different restaurant. Would you like to clear your cart and add this item?')) {
+                        cart = [];
+                    } else {
+                        return; // User chose not to clear cart
+                    }
+                }
+                
+                const existingItem = cart.find(item => item.id === itemId);
+                
+                if (existingItem) {
+                    existingItem.quantity += 1;
+                } else {
+                    cart.push({
+                        id: itemId,
+                        name: name,
+                        price: price,
+                        quantity: 1,
+                        restaurantId: restaurantId // Store restaurant ID with each item
+                    });
+                }
+                
+                // Log for debugging
+                console.log('Added to cart:', {id: itemId, name, price, restaurantId, cart});
+                
+                localStorage.setItem('cart', JSON.stringify(cart));
+                updateCartCount();
+                
+                // Show toast notification
+                const toastContainer = document.createElement('div');
+                toastContainer.style.position = 'fixed';
+                toastContainer.style.bottom = '20px';
+                toastContainer.style.right = '20px';
+                toastContainer.style.zIndex = '1050';
+                
+                const toast = document.createElement('div');
+                toast.className = 'toast show';
+                toast.setAttribute('role', 'alert');
+                toast.setAttribute('aria-live', 'assertive');
+                toast.setAttribute('aria-atomic', 'true');
+                toast.innerHTML = `
+                <div class="toast-header">
+                    <strong class="me-auto">FoodExpress</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    ${name} added to cart!
+                </div>
+                `;
+                
+                toastContainer.appendChild(toast);
+                document.body.appendChild(toastContainer);
+                
+                setTimeout(() => {
+                    document.body.removeChild(toastContainer);
+                }, 3000);
+            };
+        });
+    </script>
+    {% block scripts %}
+    {% endblock %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const buttons = document.querySelectorAll(".add-to-cart-btn");
+        
+            buttons.forEach(button => {
+                button.addEventListener("click", function () {
+                    const parent = button.closest(".menu-item");
+                    const name = parent.querySelector(".item-name").innerText;
+                    const price = parseFloat(parent.querySelector(".item-price").innerText);
+        
+                    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+                    let existingItem = cart.find(item => item.name === name);
+        
+                    if (existingItem) {
+                        existingItem.quantity += 1;
+                    } else {
+                        cart.push({ name: name, price: price, quantity: 1 });
+                    }
+        
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                    alert(name + " added to cart!");
+                });
+            });
+        });
+        </script>
+        
+</body>
+</html>

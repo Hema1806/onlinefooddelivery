@@ -1,0 +1,552 @@
+{% extends "base.html" %}
+
+{% block title %}
+Checkout & Payment
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-credit-card me-2"></i>Checkout & Payment</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Delivery Address</h5>
+                            <div id="userAddress" class="p-3 border rounded mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span id="addressName" class="fw-bold">Loading...</span>
+                                    <button id="editAddressBtn" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                </div>
+                                <div id="addressDetails" class="mt-2">Loading address...</div>
+                                <div id="addressPhone" class="mt-1 text-muted"><i class="fas fa-phone me-1"></i>Loading...</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Order Summary</h5>
+                            <div id="orderSummary" class="p-3 border rounded">
+                                <div id="orderItems">Loading items...</div>
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <span>Subtotal:</span>
+                                    <span>₹<span id="subtotal">0.00</span></span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Delivery Fee:</span>
+                                    <span>₹<span id="deliveryFee">40.00</span></span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Taxes:</span>
+                                    <span>₹<span id="taxes">0.00</span></span>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between fw-bold">
+                                    <span>Total:</span>
+                                    <span>₹<span id="total">0.00</span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h5 class="mb-3">Choose Payment Method</h5>
+                    <div class="payment-methods">
+                        <div class="form-check mb-3 p-3 border rounded">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="cardPayment" value="card" checked>
+                            <label class="form-check-label w-100" for="cardPayment">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-credit-card me-2 text-primary" style="font-size: 1.5rem;"></i>
+                                    <div>
+                                        <span class="d-block fw-bold">Credit/Debit Card</span>
+                                        <span class="text-muted small">Visa, Mastercard, Rupay</span>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-3 p-3 border rounded">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="upiPayment" value="upi">
+                            <label class="form-check-label w-100" for="upiPayment">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-mobile-alt me-2 text-success" style="font-size: 1.5rem;"></i>
+                                    <div>
+                                        <span class="d-block fw-bold">UPI</span>
+                                        <span class="text-muted small">Google Pay, PhonePe, Paytm</span>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-3 p-3 border rounded">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="codPayment" value="cod">
+                            <label class="form-check-label w-100" for="codPayment">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-money-bill-wave me-2 text-secondary" style="font-size: 1.5rem;"></i>
+                                    <div>
+                                        <span class="d-block fw-bold">Cash on Delivery</span>
+                                        <span class="text-muted small">Pay when you receive your order</span>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Card Payment Form (initially hidden) -->
+                    <div id="cardPaymentForm" class="mt-4 p-3 border rounded">
+                        <div class="mb-3">
+                            <label for="cardNumber" class="form-label">Card Number</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19">
+                                <span class="input-group-text">
+                                    <i class="fab fa-cc-visa me-2"></i>
+                                    <i class="fab fa-cc-mastercard me-2"></i>
+                                    <i class="fab fa-cc-amex"></i>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="expiryDate" class="form-label">Expiry Date</label>
+                                <input type="text" class="form-control" id="expiryDate" placeholder="MM/YY" maxlength="5">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="cvv" class="form-label">CVV</label>
+                                <input type="password" class="form-control" id="cvv" placeholder="123" maxlength="3">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="nameOnCard" class="form-label">Name on Card</label>
+                            <input type="text" class="form-control" id="nameOnCard" placeholder="John Doe">
+                        </div>
+                    </div>
+
+                    <!-- UPI Payment Form (initially hidden) -->
+                    <div id="upiPaymentForm" class="mt-4 p-3 border rounded" style="display: none;">
+                        <div class="mb-3">
+                            <label for="upiId" class="form-label">UPI ID</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="upiId" placeholder="yourname@upi">
+                                <span class="input-group-text">
+                                    <img src="/api/placeholder/25/25" alt="UPI" class="me-1">
+                                </span>
+                            </div>
+                            <div class="form-text">Enter your UPI ID in the format name@bank or name@upi</div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button id="placeOrderBtn" class="btn btn-primary btn-lg">
+                            <i class="fas fa-lock me-2"></i>Pay & Place Order
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Address Edit Modal -->
+<div class="modal fade" id="addressModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Delivery Address</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addressForm">
+                    <div class="mb-3">
+                        <label for="addressLine1" class="form-label">Address Line 1</label>
+                        <input type="text" class="form-control" id="addressLine1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="addressLine2" class="form-label">Address Line 2 (Optional)</label>
+                        <input type="text" class="form-control" id="addressLine2">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="city" class="form-label">City</label>
+                            <input type="text" class="form-control" id="city" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="pincode" class="form-label">Pincode</label>
+                            <input type="text" class="form-control" id="pincode" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" id="phone" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveAddressBtn">Save Address</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Processing Modal -->
+<div class="modal fade" id="paymentProcessingModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-5">
+                <div class="spinner-border text-primary mb-4" style="width: 3rem; height: 3rem;" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h4 id="processingMessage">Processing your payment...</h4>
+                <p class="text-muted">Please do not close this window.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Order Success Modal -->
+<div class="modal fade" id="orderSuccessModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-5">
+                <div class="mb-4 text-success">
+                    <i class="fas fa-check-circle" style="font-size: 5rem;"></i>
+                </div>
+                <h3>Order Placed Successfully!</h3>
+                <p>Your order has been confirmed and is being prepared.</p>
+                <div class="d-flex justify-content-between mt-4">
+                    <p class="mb-0"><strong>Order ID:</strong> <span id="successOrderId"></span></p>
+                    <p class="mb-0"><strong>Amount:</strong> ₹<span id="successAmount"></span></p>
+                </div>
+                <div class="mt-4">
+                    <a href="{{ url_for('order_status') }}" class="btn btn-primary">Track Order</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    // Get cart data from localStorage
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    
+    // Get restaurant ID from URL parameter or localStorage
+    const urlParams = new URLSearchParams(window.location.search);
+    const restaurantId = urlParams.get('restaurantId') || localStorage.getItem('selectedRestaurantId');
+    
+    if (!restaurantId) {
+        window.location.href = "/restaurants";
+        return;
+    }
+    
+    // Store restaurant ID for later use
+    localStorage.setItem('selectedRestaurantId', restaurantId);
+    
+    // Display user address
+    fetchUserAddress();
+    
+    // Display order summary
+    displayOrderSummary();
+    
+    // Payment method toggle
+    const paymentMethodRadios = document.querySelectorAll('input[name="paymentMethod"]');
+    paymentMethodRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Hide all payment forms first
+            document.getElementById('cardPaymentForm').style.display = 'none';
+            document.getElementById('upiPaymentForm').style.display = 'none';
+            
+            // Show selected payment form
+            if (this.value === 'card') {
+                document.getElementById('cardPaymentForm').style.display = 'block';
+            } else if (this.value === 'upi') {
+                document.getElementById('upiPaymentForm').style.display = 'block';
+            }
+        });
+    });
+    
+    // Card input formatting
+    const cardNumberInput = document.getElementById('cardNumber');
+    cardNumberInput.addEventListener('input', function() {
+        let value = this.value.replace(/\D/g, '');
+        let formattedValue = '';
+        
+        for (let i = 0; i < value.length; i++) {
+            if (i > 0 && i % 4 === 0) {
+                formattedValue += ' ';
+            }
+            formattedValue += value[i];
+        }
+        
+        this.value = formattedValue;
+    });
+    
+    const expiryDateInput = document.getElementById('expiryDate');
+    expiryDateInput.addEventListener('input', function() {
+        let value = this.value.replace(/\D/g, '');
+        
+        if (value.length > 2) {
+            this.value = value.substring(0, 2) + '/' + value.substring(2, 4);
+        } else {
+            this.value = value;
+        }
+    });
+    
+    // Edit address button
+    document.getElementById('editAddressBtn').addEventListener('click', function() {
+        const addressModal = new bootstrap.Modal(document.getElementById('addressModal'));
+        addressModal.show();
+    });
+    
+    // Save address button
+    document.getElementById('saveAddressBtn').addEventListener('click', function() {
+        const form = document.getElementById('addressForm');
+        if (form.checkValidity()) {
+            const address = {
+                addressLine1: document.getElementById('addressLine1').value,
+                addressLine2: document.getElementById('addressLine2').value,
+                city: document.getElementById('city').value,
+                pincode: document.getElementById('pincode').value,
+                phone: document.getElementById('phone').value
+            };
+            
+            updateAddress(address);
+            
+            const addressModal = bootstrap.Modal.getInstance(document.getElementById('addressModal'));
+            addressModal.hide();
+        } else {
+            form.reportValidity();
+        }
+    });
+    
+    // Place order button
+    document.getElementById('placeOrderBtn').addEventListener('click', function() {
+        // Validate based on selected payment method
+        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+        let isValid = true;
+        
+        if (paymentMethod === 'card') {
+            const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
+            const expiryDate = document.getElementById('expiryDate').value;
+            const cvv = document.getElementById('cvv').value;
+            const nameOnCard = document.getElementById('nameOnCard').value;
+            
+            if (!cardNumber || cardNumber.length < 16 || !expiryDate || !cvv || !nameOnCard) {
+                alert('Please fill in all card details correctly.');
+                isValid = false;
+            }
+        } else if (paymentMethod === 'upi') {
+            const upiId = document.getElementById('upiId').value;
+            if (!upiId || !upiId.includes('@')) {
+                alert('Please enter a valid UPI ID.');
+                isValid = false;
+            }
+        }
+        
+        if (isValid) {
+            processPayment(paymentMethod);
+        }
+    });
+    
+    function fetchUserAddress() {
+        // Fetch user address from the backend
+        fetch('/api/user/address')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch user address');
+                }
+                return response.json();
+            })
+            .then(userData => {
+                // If you get real data from the server, use it
+                if (!userData || userData.error) {
+                    userData = {
+                        name: 'User',
+                        address: '123 Food Street, Model Town',
+                        city: 'Coimbatore',
+                        pincode: '641001',
+                        phone: '+91 9876543210'
+                    };
+                }
+                
+                document.getElementById('addressName').textContent = userData.name;
+                const addressDetails = userData.address ? userData.address : 'No address found';
+                document.getElementById('addressDetails').textContent = addressDetails;
+                document.getElementById('addressPhone').textContent = userData.phone || 'No phone found';
+                
+                // Pre-fill address form if we have an address
+                if (userData.address) {
+                    const addressParts = userData.address.split(',');
+                    document.getElementById('addressLine1').value = addressParts[0] ? addressParts[0].trim() : '';
+                    if (addressParts.length > 2) {
+                        document.getElementById('addressLine2').value = addressParts[1] ? addressParts[1].trim() : '';
+                        document.getElementById('city').value = addressParts[2] ? addressParts[2].trim() : '';
+                    } else if (addressParts.length > 1) {
+                        document.getElementById('city').value = addressParts[1] ? addressParts[1].trim() : '';
+                    }
+                }
+                document.getElementById('phone').value = userData.phone || '';
+            })
+            .catch(error => {
+                console.error('Error fetching user data:', error);
+                // Show a fallback address in case of error
+                document.getElementById('addressName').textContent = 'User';
+                document.getElementById('addressDetails').textContent = 'Please update your address';
+                document.getElementById('addressPhone').textContent = 'Please update your phone';
+            });
+    }
+    
+    function updateAddress(address) {
+        // Update address on the UI
+        const addressDetails = `${address.addressLine1}, ${address.addressLine2 ? address.addressLine2 + ', ' : ''}${address.city}, ${address.pincode}`;
+        document.getElementById('addressDetails').textContent = addressDetails;
+        document.getElementById('addressPhone').textContent = address.phone;
+        
+        // Send the updated address to the server
+        fetch('/update_user_address', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(address)
+        })
+        .catch(error => {
+            console.error('Error updating address:', error);
+        });
+    }
+    
+    function displayOrderSummary() {
+        const orderItemsContainer = document.getElementById('orderItems');
+        orderItemsContainer.innerHTML = '';
+        
+        let subtotal = 0;
+        
+        if (cart.length === 0) {
+            orderItemsContainer.innerHTML = '<p class="text-muted">No items in cart</p>';
+        } else {
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                subtotal += itemTotal;
+                
+                const itemElement = document.createElement('div');
+                itemElement.className = 'd-flex justify-content-between mb-2';
+                itemElement.innerHTML = `
+                    <span>${item.name} x ${item.quantity}</span>
+                    <span>₹${itemTotal.toFixed(2)}</span>
+                `;
+                orderItemsContainer.appendChild(itemElement);
+            });
+        }
+        
+        // Calculate taxes (5% for example)
+        const taxes = subtotal * 0.05;
+        
+        // Fixed delivery fee
+        const deliveryFee = 40.00;
+        
+        // Total
+        const total = subtotal + taxes + deliveryFee;
+        
+        document.getElementById('subtotal').textContent = subtotal.toFixed(2);
+        document.getElementById('taxes').textContent = taxes.toFixed(2);
+        document.getElementById('total').textContent = total.toFixed(2);
+    }
+    
+    function processPayment(paymentMethod) {
+        // Show processing modal
+        const processingModal = new bootstrap.Modal(document.getElementById('paymentProcessingModal'));
+        processingModal.show();
+        
+        // Calculate total
+        const total = parseFloat(document.getElementById('total').textContent);
+        
+        // Map payment method values to backend-expected values
+        const paymentMethodMap = {
+            'card': 'Credit Card',
+            'upi': 'UPI',
+            'cod': 'Cash on Delivery'
+        };
+        
+        // Create order data
+        const orderData = {
+            restaurant_id: parseInt(restaurantId),
+            items: cart,
+            amount: total
+        };
+        
+        // First place the order
+        fetch("/order", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(orderData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Order placement failed with status: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(orderResponse => {
+            // Now process payment with the order ID
+            if (!orderResponse.order_id) {
+                throw new Error('No order ID returned from server');
+            }
+            
+            // Prepare payment data according to your backend expectations
+            const paymentData = {
+                order_id: orderResponse.order_id,
+                payment_method: paymentMethodMap[paymentMethod],
+                amount: total
+            };
+            
+            // Process payment
+            return fetch("/payment", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(paymentData)
+            });
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Payment processing failed with status: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(paymentResponse => {
+            // Hide processing modal
+            processingModal.hide();
+            
+            // Clear cart
+            localStorage.setItem('cart', JSON.stringify([]));
+            
+            // Show success modal
+            document.getElementById('successOrderId').textContent = paymentResponse.order_id;
+            document.getElementById('successAmount').textContent = total.toFixed(2);
+            
+            const successModal = new bootstrap.Modal(document.getElementById('orderSuccessModal'));
+            successModal.show();
+            
+            // After 5 seconds, redirect to order status page
+            setTimeout(function() {
+                window.location.href = "/order-status";
+            }, 5000);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            processingModal.hide();
+            // Show a more specific error message
+            alert('Payment processing failed: ' + error.message);
+        });
+    }
+});
+</script>
+{% endblock %}

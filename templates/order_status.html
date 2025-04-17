@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}Order Status - FoodExpress{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-center mb-4">Your Orders</h2>
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <div class="row">
+                        <div class="col-md-2">Order ID</div>
+                        <div class="col-md-2">Date</div>
+                        <div class="col-md-3">Restaurant</div>
+                        <div class="col-md-2">Total</div>
+                        <div class="col-md-2">Status</div>
+                        <div class="col-md-1">Actions</div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="ordersContainer" class="orders-list">
+                        <div class="text-center py-5 text-muted" id="noOrdersMessage">
+                            <i class="fas fa-clipboard-list fa-3x mb-3"></i>
+                            <p>You don't have any orders yet.</p>
+                            <a href="{{ url_for('restaurants') }}" class="btn btn-primary mt-2">
+                                <i class="fas fa-utensils me-2"></i>Browse Restaurants
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Order Details Modal -->
+<div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Order Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Order ID:</strong> <span id="modalOrderId"></span></p>
+                        <p><strong>Date:</strong> <span id="modalOrderDate"></span></p>
+                        <p><strong>Restaurant:</strong> <span id="modalRestaurantName"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Status:</strong> <span id="modalOrderStatus" class="badge"></span></p>
+                        <p><strong>Payment Method:</strong> <span id="modalPaymentMethod"></span></p>
+                        <p><strong>Total Amount:</strong> ₹<span id="modalTotalAmount"></span></p>
+                    </div>
+                </div>
+                
+                <h6 class="mt-4 mb-3">Order Items</h6>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalOrderItems">
+                            <!-- Order items will be dynamically added here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="trackingBtnContainer" class="text-center mt-4">
+                    <a href="#" id="trackOrderBtn" class="btn btn-primary">
+                        <i class="fas fa-map-marker-alt me-2"></i>Track Order
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fetch orders from backend
+        fetchOrders();
+        
+        // Function to fetch orders
+        function fetchOrders() {
+            fetch('/api/user/orders')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch orders');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    displayOrders(data.orders);
+                })
+                .catch(error => {
+                    console.error('Error fetching orders:', error);
+                    displayErrorMessage();
+                });
+        }
+        
+        // Function to display orders
+        function displayOrders(orders) {
+            const container = document.getElementById('ordersContainer');
+            const noOrdersMessage = document.getElementById('noOrdersMessage');
+            
+            if (!orders || orders.length === 0) {
+                noOrdersMessage.style.display = 'block';
+                return;
+            }
+            
+            noOrdersMessage.style.display = 'none';
+            container.innerHTML = '';
+            
+            orders.forEach(order => {
+                const statusClass = getStatusClass(order.status);
+                const orderDate = new Date(order.order_date).toLocaleDateString('en-IN', {
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric'
+                });
+                
+                const orderElement = document.createElement('div');
+                orderElement.className = 'order-item p-3 border-bottom';
+                orderElement.innerHTML = `
+                    <div class="row align-items-center">
+                        <div class="col-md-2">#${order.order_id}</div>
+                        <div class="col-md-2">${orderDate}</div>
+                        <div class="col-md-3">${order.restaurant_name}</div>
+                        <div class="col-md-2">₹${order.total_price.toFixed(2)}</div>
+                        <div class="col-md-2">
+                            <span class="badge ${statusClass}">${order.status}</span>
+                        </div>
+                        <div class="col-md-1">
+                            <button class="btn btn-sm btn-outline-primary view-order-btn" 
+                                    data-order-id="${order.order_id}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(orderElement);
+                
+                // Add click event to view order details
+                orderElement.querySelector('.view-order-btn').addEventListener('click', function() {
+                    const orderId = this.getAttribute('data-order-id');
+                    viewOrderDetails(orderId);
+                });
+            });
+        }
+        
+        // Function to get status badge class
+        function getStatusClass(status) {
+            switch(status.toLowerCase()) {
+                case 'pending':
+                    return 'bg-warning text-dark';
+                case 'confirmed':
+                    return 'bg-info text-dark';
+                case 'preparing':
+                    return 'bg-primary';
+                case 'out for delivery':
+                    return 'bg-info';
+                case 'delivered':
+                    return 'bg-success';
+                case 'cancelled':
+                    return 'bg-danger';
+                default:
+                    return 'bg-secondary';
+            }
+        }
+        
+        // Function to display error message
+        function displayErrorMessage() {
+            const container = document.getElementById('ordersContainer');
+            const noOrdersMessage = document.getElementById('noOrdersMessage');
+            
+            noOrdersMessage.style.display = 'none';
+            container.innerHTML = `
+                <div class="text-center py-5 text-danger">
+                    <i class="fas fa-exclamation-circle fa-3x mb-3"></i>
+                    <p>Failed to load your orders. Please try again later.</p>
+                    <button class="btn btn-outline-primary mt-2" onclick="location.reload()">
+                        <i class="fas fa-sync-alt me-2"></i>Retry
+                    </button>
+                </div>
+            `;
+        }
+        
+        // Function to view order details
+        function viewOrderDetails(orderId) {
+            fetch(`/api/order/${orderId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch order details');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    populateOrderModal(data);
+                    const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+                    modal.show();
+                })
+                .catch(error => {
+                    console.error('Error fetching order details:', error);
+                    alert('Failed to load order details. Please try again.');
+                });
+        }
+        
+        // Function to populate order details modal
+        function populateOrderModal(order) {
+            document.getElementById('modalOrderId').textContent = order.order_id;
+            document.getElementById('modalOrderDate').textContent = new Date(order.order_date).toLocaleString('en-IN');
+            document.getElementById('modalRestaurantName').textContent = order.restaurant_name;
+            
+            const statusElement = document.getElementById('modalOrderStatus');
+            statusElement.textContent = order.status;
+            statusElement.className = `badge ${getStatusClass(order.status)}`;
+            
+            document.getElementById('modalPaymentMethod').textContent = order.payment_method || 'Cash on Delivery';
+            document.getElementById('modalTotalAmount').textContent = order.total_price.toFixed(2);
+            
+            // Track order button visibility
+            const trackingBtnContainer = document.getElementById('trackingBtnContainer');
+            if (['confirmed', 'preparing', 'out for delivery'].includes(order.status.toLowerCase())) {
+                trackingBtnContainer.style.display = 'block';
+                document.getElementById('trackOrderBtn').href = `/delivery-tracking?order_id=${order.order_id}`;
+            } else {
+                trackingBtnContainer.style.display = 'none';
+            }
+            
+            // Populate order items
+            const orderItemsContainer = document.getElementById('modalOrderItems');
+            orderItemsContainer.innerHTML = '';
+            
+            order.items.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.item_name}</td>
+                    <td>₹${item.price.toFixed(2)}</td>
+                    <td>${item.quantity}</td>
+                    <td>₹${(item.price * item.quantity).toFixed(2)}</td>
+                `;
+                orderItemsContainer.appendChild(row);
+            });
+        }
+    });
+</script>
+{% endblock %}
